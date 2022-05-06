@@ -36,14 +36,14 @@ const PatientDetails = () => {
   };
 
   const handleOk = () => {
-    console.log(moment().format("DD-MM-YYYY"));
+    setDate(moment().format("DD-MM-YYYY"));
     setConfirmLoading(true);
 
     const documentRef = doc(db, "patients", x.phoneNumber);
 
     updateDoc(documentRef, {
       visits: arrayUnion({
-        date: date,
+        date: moment().format("DD-MM-YYYY"),
         problem: problem,
         treatment: treatment,
         nextAppointment: nextAppointment,
@@ -143,7 +143,7 @@ const PatientDetails = () => {
       style={{ minHeight: "100vh" }}
     >
       <Card title={name} style={{ width: 300 }} extra={<Popconfirm
-                  title="Are you sure to delete this visit?"
+                  title="Are you sure to delete this patient?"
                   onConfirm={()=>{PatientDelete()}}
                   onVisibleChange={() => console.log('visible change')}
                 >
@@ -195,7 +195,6 @@ const PatientDetails = () => {
           format="DD-MM-YYYY"
             onChange={(date, dateString) => {
               setAppointment(dateString);
-              setDate(moment().format("DD-MM-YYYY"));
             }}
           />
         </Row>
