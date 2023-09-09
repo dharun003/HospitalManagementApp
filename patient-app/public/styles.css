@@ -1,0 +1,11 @@
+/* styles.css */
+body {
+    margin: 0;
+    padding: 0;
+    background-image: url("../src/components/logo.jpeg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: top right;
+    font-family: Arial, sans-serif;
+  }
+  

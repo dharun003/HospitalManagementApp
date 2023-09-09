@@ -125,7 +125,7 @@ const AddNewPatient = () => {
               navigate("/", { replace: true });
             }}
           >
-            Search Patients
+            Back
           </Button>
         </Row>
       </Space>
