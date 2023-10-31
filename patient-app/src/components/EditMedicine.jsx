@@ -4,15 +4,18 @@ import React, { useState } from "react";
 import { Modal, Form, Input, Button } from "antd";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
 const EditMedicine = ({ visible, onCancel, onEdit, currentMedicine }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const userName = useUserEmail().userEmail;
 
   const updateMedicine = async (id, updatedData) => {
     try {
       // Get the reference to the medicine document with the provided ID
-      const medicineRef = doc(db, "medicines", id);
+      const medicineRef = doc(db, "medicines_" + userName, id);
 
       // Update the medicine document with the updatedData object
       await updateDoc(medicineRef, updatedData);

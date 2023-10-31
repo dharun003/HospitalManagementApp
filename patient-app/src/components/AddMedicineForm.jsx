@@ -5,12 +5,18 @@ import { Input, Button, message } from "antd";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
+
+
+
 
 const AddMedicineForm = () => {
   const navigate = useNavigate();
   const [Name, setName] = useState("");
   const [Quantity, setQuantity] = useState("");
   const [Price, setPrice] = useState("");
+  const userName = useUserEmail().userEmail;
 
   const handleAddMedicine = async () => {
     try {
@@ -23,10 +29,11 @@ const AddMedicineForm = () => {
       // Convert the quantity and price to integers
       const quantityInt = parseInt(Quantity);
       const priceInt = parseInt(Price);
+      
 
       // Add the new document to the "medicines" collection in Firebase
-      await addDoc(collection(db, "medicines"), { Name, Quantity: quantityInt, Price: priceInt });
-
+      await addDoc(collection(db, "medicines_" + userName), { Name, Quantity: quantityInt, Price: priceInt });
+      console.log('Add medicine page log',userName);
       message.success("Medicine added successfully.");
       navigate("/MedicinesPage");
     } catch (error) {

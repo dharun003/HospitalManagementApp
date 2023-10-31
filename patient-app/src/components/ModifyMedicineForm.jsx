@@ -4,17 +4,20 @@ import React, { useState, useEffect } from "react";
 import { Input, Button, message } from "antd";
 import { collection, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../utils/firebase";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
 const ModifyMedicineForm = ({ medicineId }) => {
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
+  const userName = useUserEmail().userEmail;
 
   useEffect(() => {
     // Fetch the existing medicine data based on the provided medicineId
     const getMedicineData = async () => {
       try {
-        const docRef = doc(db, "medicines", medicineId);
+        const docRef = doc(db, "medicines_" + userName, medicineId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -47,7 +50,7 @@ const ModifyMedicineForm = ({ medicineId }) => {
       const priceInt = parseInt(price);
 
       // Update the existing medicine document in the "medicines" collection in Firebase
-      await updateDoc(doc(db, "medicines", medicineId), { name, quantity: quantityInt, price: priceInt });
+      await updateDoc(doc(db, "medicines_" + userName, medicineId), { name, quantity: quantityInt, price: priceInt });
 
       message.success("Medicine updated successfully.");
       // You may navigate back to the LandingPage or take any other action after successful update.

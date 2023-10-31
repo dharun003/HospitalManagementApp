@@ -9,20 +9,39 @@ import Login from "./components/signin.jsx";
 import { auth } from "./utils/firebase.js";
 import BillPage from "./components/BillPage";
 import Header from "./components/header";
+import { useUserEmail } from './components/UserContext'; 
 
 const App =() => {
-  const [user, setUser] = useState(true);
+  const [isUserPresent, setIsUserPresent] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const { setUserEmail } = useUserEmail();
   
   auth.onAuthStateChanged((user)=>{
     if(user){
-      setUser(true);
+      setIsUserPresent(true);
+      console.log('User is signed in:', user);
+      const userEmail = user.email;
+	  
+			//Set the user's email in the context
+			setUserEmail(userEmail);
+      console.log('UserEmail', userEmail);
+
     }
     else{
-      setUser(false);
+      setIsUserPresent(false);
+      console.log('User is signed out');
     }
+
+    setIsLoading(false);
   })
 
-  if(user === true){
+  if (isLoading) {
+    // Display a loading indicator while authentication is in progress
+    return <div>Loading...</div>;
+  }
+
+
+  if(isUserPresent === true){
     return (
       <Router>
           <div>

@@ -6,11 +6,14 @@ import { Link } from "react-router-dom";
 import { collection, query, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "../utils/firebase";
 import EditMedicine from "./EditMedicine";
+import { auth} from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
 const MedicinesPage = () => {
   const [medicines, setMedicines] = useState([]);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [currentMedicine, setCurrentMedicine] = useState(null);
+  const userName = useUserEmail().userEmail;
 
   const showEditModal = (medicine) => {
     setCurrentMedicine(medicine);
@@ -24,7 +27,8 @@ const MedicinesPage = () => {
 
   // Function to fetch the list of medicines from the Firebase database
   const fetchMedicines = async () => {
-    const q = query(collection(db, "medicines"));
+    const q = query(collection(db, "medicines_" + userName));
+    console.log('Medicines page log',userName);
     const querySnapshot = await getDocs(q);
     const medicinesList = querySnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -42,7 +46,7 @@ const MedicinesPage = () => {
   // Function to handle deleting a medicine entry
   const handleDelete = async (id) => {
     try {
-      await deleteDoc(doc(db, "medicines", id));
+      await deleteDoc(doc(db, "medicines_" + userName, id));
       fetchMedicines(); // Refresh the list after deletion
     } catch (error) {
       console.error("Error deleting medicine:", error);

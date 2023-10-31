@@ -6,10 +6,14 @@ import { db } from "../utils/firebase";
 import { setDoc, doc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
-async function createPatient(db, name, gender, address, phoneNumber) {
+
+
+async function createPatient(db, name, gender, address, phoneNumber, userName) {
   // Add a new document in collection
-  return await setDoc(doc(db, "patients", phoneNumber), {
+  return await setDoc(doc(db, "patients_" + userName, phoneNumber), {
     name: name.toLowerCase(),
     address: address,
     gender: gender,
@@ -21,11 +25,13 @@ const AddNewPatient = () => {
   const { Option } = Select;
   const { TextArea } = Input;
   const navigate = useNavigate();
+  const userName = useUserEmail().userEmail;
 
   const [name, setName] = useState("");
   const [phoneNumber, setNumber] = useState("");
   const [gender, setGender] = useState("M");
   const [address, setAddress] = useState("");
+  
 
   return (
     <Row
@@ -90,7 +96,7 @@ const AddNewPatient = () => {
             type="primary"
             onClick={async () => {
               if (phoneNumber.length > 0 && name.length > 0) {
-                createPatient(db, name, gender, address, phoneNumber)
+                createPatient(db, name, gender, address, phoneNumber, userName)
                   .then((result) => {
                     console.log(result);
                     message.success("New patient added");

@@ -14,6 +14,8 @@ import Button from "@mui/material/Button";
 import { v4 as uuidv4 } from 'uuid';
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
 const BillPage = () => {
   const location = useLocation();
@@ -22,11 +24,12 @@ const BillPage = () => {
   const [newMedicineName, setNewMedicineName] = useState("");
   const [newMedicineQuantity, setNewMedicineQuantity] = useState("");
   const [newMedicinePrice, setNewMedicinePrice] = useState("");
+  const userName = useUserEmail().userEmail;
 
   const fetchMedicineDetails = async () => {
     try {
       console.log(selectedMedicines);
-      const q = query(collection(db, "medicines"), where("Name", "in", selectedMedicines.map(med => med.name)));
+      const q = query(collection(db, "medicines_" + userName), where("Name", "in", selectedMedicines.map(med => med.name)));
       const querySnapshot = await getDocs(q);
       const medicineDetailsData = querySnapshot.docs
         .map((doc) => ({

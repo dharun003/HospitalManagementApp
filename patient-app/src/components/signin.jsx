@@ -1,7 +1,9 @@
 import { auth, provider } from "../utils/firebase";
-import React from 'react';
+import React from "react";
 import { Button, Row } from "antd";
 import { signInWithPopup } from "firebase/auth";
+//export const GLOBAL_CONSTANT = auth.currentUser.email;
+
 
 const Login = () => {
 

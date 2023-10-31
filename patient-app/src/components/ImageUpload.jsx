@@ -1,8 +1,9 @@
 // src/components/ImageUpload.js
-// To do.. Handle add medicine backend update, If same image uploaded remove make it distinct.
+// To do..If same image uploaded remove make it distinct.
 
 import React, { useState } from 'react';
 import { storage } from "../utils/firebase";
+import { auth } from "../utils/firebase";
 import {
     ref,
     uploadBytesResumable,
@@ -10,6 +11,7 @@ import {
     listAll, // Import listAll
     deleteObject, // Import deleteObject
   } from 'firebase/storage';
+import { useUserEmail } from './UserContext';
 
 
 function ImageUpload({ onImagesUpdated ,guid }) {
@@ -26,6 +28,8 @@ function ImageUpload({ onImagesUpdated ,guid }) {
     }
   };
 
+  const userName = useUserEmail().userEmail;
+
   const buttonStyle = {
     backgroundColor: '#f2f2f2', // Button background color
     color: '#000', // Text color
@@ -39,7 +43,7 @@ function ImageUpload({ onImagesUpdated ,guid }) {
 
   const handleDelete = (name) => {
     // Delete the image from Firebase Storage
-    const storageRef = ref(storage, `Images/${guid}/${name}`);
+    const storageRef = ref(storage, `Images_${userName}/${guid}/${name}`);
     deleteObject(storageRef)
       .then(() => {
         // Remove the deleted image from the list
@@ -86,7 +90,7 @@ function ImageUpload({ onImagesUpdated ,guid }) {
 const handleUpload = (image) => {
     if (image) {
       
-      const storageRef = ref(storage, `Images/${guid}/${image.name}`);
+      const storageRef = ref(storage, `Images_${userName}/${guid}/${image.name}`);
       const uploadTask = uploadBytesResumable(storageRef, image);
 
       uploadTask.on('state_changed', (snapshot) => {

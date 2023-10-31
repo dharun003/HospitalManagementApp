@@ -29,10 +29,10 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import moment from "moment";
-import jsPDF from "jspdf";
 import ImageUpload from './ImageUpload';
 import { v4 as uuidv4 } from 'uuid';
-//import BillPage from "./BillPage";
+import { auth } from "../utils/firebase";
+import { useUserEmail } from "./UserContext";
 
 const { Option } = Select;
 
@@ -48,6 +48,7 @@ const PatientDetails = () => {
   const [selectedMedicines, setSelectedMedicines] = useState([]);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [guidForVisit, setGuid] = useState("");
+  const userName = useUserEmail().userEmail;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,7 +74,7 @@ const PatientDetails = () => {
   const handleOk = () => {
     setConfirmLoading(true);
 
-    const documentRef = doc(db, "patients", x.phoneNumber);
+    const documentRef = doc(db, "patients_" + userName, x.phoneNumber);
 
     // for(medicine in selectedMedicines)
     // {
@@ -84,7 +85,7 @@ const PatientDetails = () => {
     console.log(selectedMedicines);
     selectedMedicines.forEach(async (selectedMedicine) => {
       console.log(selectedMedicine.id)
-      const medicineRef = doc(db, 'medicines', selectedMedicine.id);
+      const medicineRef = doc(db, "medicines_" + userName, selectedMedicine.id);
     
       try {
         // Update the Firestore document
@@ -121,7 +122,7 @@ const PatientDetails = () => {
 
   const VisitDelete = async (date, problem, treatment, images, medicine) => {
     let q = query(
-      collection(db, "patients"),
+      collection(db, "patients_" + userName),
       where("phoneNumber", "==", phoneNumber)
     );
 
@@ -138,7 +139,7 @@ const PatientDetails = () => {
       });
     }
 
-    const documentRef = doc(db, "patients", patientDoc.id);
+    const documentRef = doc(db, "patients_" + userName, patientDoc.id);
     console.log(patientDoc.id);
 
     updateDoc(documentRef, {
@@ -167,7 +168,7 @@ const PatientDetails = () => {
   };
 
   const PatientDelete = async () => {
-    await deleteDoc(doc(db, "patients", x.phoneNumber));
+    await deleteDoc(doc(db, "patients_" + userName, x.phoneNumber));
 
     navigate("/", { replace: true });
   };
@@ -179,7 +180,7 @@ const PatientDetails = () => {
 
   const loadMoreData = () => {
     let q = query(
-      collection(db, "patients"),
+      collection(db, "patients_" + userName),
       where("phoneNumber", "==", x.phoneNumber)
     );
 
@@ -190,7 +191,7 @@ const PatientDetails = () => {
           patientDoc = doc;
         });
 
-        const docRef = doc(db, "patients", patientDoc.id);
+        const docRef = doc(db, "patients_" + userName, patientDoc.id);
 
         getDoc(docRef)
           .then((doc) => {
@@ -219,7 +220,7 @@ const PatientDetails = () => {
 
   const fetchMedicines = async () => {
 
-    const q = query(collection(db, "medicines"));
+    const q = query(collection(db, "medicines_" + userName));
       const querySnapshot = await getDocs(q);
       const fetchedMedicines = querySnapshot.docs
         .map((doc) => ({
@@ -533,9 +534,9 @@ const PatientDetails = () => {
                   </Button>
                 </Popconfirm>
 
-                <Button type="primary" onClick={() => showBill(item.medicine)}>
+                {/* <Button type="primary" onClick={() => showBill(item.medicine)}>
                   Show Bill
-                </Button>
+                </Button> */}
               </div>
             </List.Item>
           )}

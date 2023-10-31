@@ -19,6 +19,7 @@
     "jspdf-autotable": "^3.5.31",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-firebase-hooks": "^5.1.1",
     "react-infinite-scroll-component": "^6.1.0",
     "react-moment": "^1.1.2",
     "react-router-dom": "^6.3.0",
