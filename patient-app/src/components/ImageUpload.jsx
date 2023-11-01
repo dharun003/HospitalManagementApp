@@ -100,7 +100,7 @@ const handleUpload = (image) => {
         console.error(error.message);
       }, () => {
         getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-          // Do something with the image URL, e.g., save it to a database
+          // Do something image URL, e.g., save it to a database
           console.log('File available at:', downloadURL);
           setProgress(0); // Reset progress
           setImage(null); // Clear the selected image
