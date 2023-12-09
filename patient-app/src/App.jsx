@@ -6,6 +6,7 @@ import LandingPage from "./components/landingPage";
 import MedicinesPage from "./components/MedicinesPage";
 import PatientDetails from "./components/patientDetails.jsx";
 import Login from "./components/signin.jsx";
+import RevenuePage from "./components/RevenuePage.jsx";
 import { auth } from "./utils/firebase.js";
 import BillPage from "./components/BillPage";
 import Header from "./components/header";
@@ -52,6 +53,7 @@ const App =() => {
         <Route exact path="/MedicinesPage" element={<MedicinesPage />} />
         <Route exact path="/patientDetails" element={<PatientDetails />} />
         <Route exact path="/AddMedicineForm" element={<AddMedicineForm />} />
+        <Route exact path="/revenue" element={<RevenuePage />} />
         <Route exact path="/bill" element={<BillPage />} />
         </Routes>
         </div>

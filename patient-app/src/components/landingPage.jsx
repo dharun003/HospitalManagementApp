@@ -119,6 +119,11 @@ const LandingPage = () => {
             </Button>
           </Row>
           <Row type="flex" justify="center" align="middle">
+          <Button>
+            <Link to="/revenue">Revenue</Link>
+          </Button>
+        </Row>
+          <Row type="flex" justify="center" align="middle">
           
           <Button onClick={() => logout()}>Sign Out</Button>
           

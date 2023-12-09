@@ -1,0 +1,7 @@
+.chart-container {
+    width: 100%; /* Adjust the width as needed */
+    max-width: 100%; /* Adjust the maximum width as needed */
+    overflow-x: auto;
+    white-space: nowrap; /* Ensure bars are displayed in a single line */
+  }
+  

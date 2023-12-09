@@ -19,7 +19,7 @@ import {
 import { db } from "../utils/firebase";
 import { useState, useEffect } from "react";
 import { List } from "antd";
-import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion, addDoc } from "firebase/firestore";
 import {
   collection,
   query,
@@ -42,6 +42,7 @@ const PatientDetails = () => {
   //To add visit
   const [visits, setVisits] = useState([]);
   const [problem, setProblem] = useState("");
+  const [notes, setNotes] = useState("");
   const [treatment, setTreatment] = useState("");
   const [medicine, setMedicine] = useState([]);
   const [medicines, setMedicines] = useState([]);
@@ -49,6 +50,8 @@ const PatientDetails = () => {
   const [uploadedImages, setUploadedImages] = useState([]);
   const [guidForVisit, setGuid] = useState("");
   const userName = useUserEmail().userEmail;
+  const [doctorFees, setDoctorFees] = useState(0);
+  const [totalMedicinePrice, setTotalMedicinePrice] = useState(0);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -71,45 +74,64 @@ const PatientDetails = () => {
     setVisible(true);
   };
 
-  const handleOk = () => {
+  const handleOk = async () => {
     setConfirmLoading(true);
 
     const documentRef = doc(db, "patients_" + userName, x.phoneNumber);
 
-    // for(medicine in selectedMedicines)
-    // {
-    //   const medicineRef = doc(db, "medicines", medicine.id);
-    //   updateDoc(medicineRef, { Quantity: medicine.actualQuantity - medicine.quantity});
-    // }
-    console.log(medicines);
-    console.log(selectedMedicines);
     selectedMedicines.forEach(async (selectedMedicine) => {
       console.log(selectedMedicine.id)
       const medicineRef = doc(db, "medicines_" + userName, selectedMedicine.id);
-    
+
       try {
         // Update the Firestore document
         await updateDoc(medicineRef, {
           Quantity: selectedMedicine.actualQuantity - selectedMedicine.quantity,
         });
-    
+
         console.log(`Updated medicine: ${medicine.id}`);
       } catch (error) {
         console.error(`Error updating medicine: ${medicine.id}`, error);
       }
     });
-    
+
+    try {
+      // Fetch the patient document
+      const documentSnapshot = await getDoc(documentRef);
+  
+      if (documentSnapshot.exists()) {
+        const patientData = documentSnapshot.data();
+        const patientName = patientData.name;
+        const patientPhoneNumber = patientData.phoneNumber;
+        await addDoc(collection(db, "revenue_" + userName), {
+          date: moment().format("DD-MM-YYYY"),
+          time: moment().format("HH.mm"),
+          note: patientName,
+          transaction: 'Credit',
+          value:  (Number(totalMedicinePrice) + Number(doctorFees))
+        });
+      } else {
+        console.log("Patient document not found");
+      }
+  
+    } catch (error) {
+      console.error("Error fetching patient document:", error);
+    }
+
+
 
     updateDoc(documentRef, {
       visits: arrayUnion({
         date: moment().format("DD-MM-YYYY"),
         problem: problem,
         treatment: treatment,
+        notes: notes,
         images: uploadedImages,
         medicine: selectedMedicines.map((medicine) => ({
           name: medicine.name,
           quantity: medicine.quantity, // Change this to the property you want (actualQuantities or quantities)
-        }))
+        })),
+        revenue: (Number(totalMedicinePrice) + Number(doctorFees))
       }),
     })
       .then(() => {
@@ -120,7 +142,7 @@ const PatientDetails = () => {
       .catch(() => { });
   };
 
-  const VisitDelete = async (date, problem, treatment, images, medicine) => {
+  const VisitDelete = async (date, problem, treatment, images, medicine, revenue) => {
     let q = query(
       collection(db, "patients_" + userName),
       where("phoneNumber", "==", phoneNumber)
@@ -146,9 +168,11 @@ const PatientDetails = () => {
       visits: arrayRemove({
         date: date,
         problem: problem,
+        notes: notes,
         images: images,
         treatment: treatment,
         medicine: medicine,
+        revenue: revenue
       }),
     })
       .then(() => {
@@ -221,13 +245,14 @@ const PatientDetails = () => {
   const fetchMedicines = async () => {
 
     const q = query(collection(db, "medicines_" + userName));
-      const querySnapshot = await getDocs(q);
-      const fetchedMedicines = querySnapshot.docs
-        .map((doc) => ({
-          Id: doc.id,
-          Name: doc.get("Name"),
-          Quantity: doc.get("Quantity")
-        }))
+    const querySnapshot = await getDocs(q);
+    const fetchedMedicines = querySnapshot.docs
+      .map((doc) => ({
+        Id: doc.id,
+        Name: doc.get("Name"),
+        Quantity: doc.get("Quantity"),
+        Price: doc.get("Price")
+      }))
     // const querySnapshot = await getDocs(collection(db, "medicines"));
     // //const fetchedMedicines = querySnapshot.docs.map((doc) => doc.data().Name);
     // const fetchedMedicines1 = querySnapshot.docs.map((doc) => {
@@ -245,7 +270,8 @@ const PatientDetails = () => {
 
     const matchingMedicine = medicines.find((medicine) => medicine.Name === medicineName);
     const actualMedicineQuantity = matchingMedicine ? matchingMedicine.Quantity : 0;
-    const medicineObj = { id: matchingMedicine.Id, name: medicineName, quantity: (actualMedicineQuantity - 1) >= 0 ? 1 : 0, actualQuantity: actualMedicineQuantity };
+    const medicinePrice = matchingMedicine ? matchingMedicine.Price : 0;
+    const medicineObj = { id: matchingMedicine.Id, name: medicineName, quantity: (actualMedicineQuantity - 1) >= 0 ? 1 : 0, actualQuantity: actualMedicineQuantity, price: medicinePrice };
     setSelectedMedicines((prevSelected) => [...prevSelected, medicineObj]);
 
     console.log(medicine);
@@ -258,6 +284,19 @@ const PatientDetails = () => {
       prevSelected.filter((medicine) => medicine.name !== medicineName)
     );
   };
+
+  // Function to calculate total medicine price
+  const calculateTotalMedicinePrice = () => {
+    const total = selectedMedicines.reduce((acc, medicine) => {
+      return acc + medicine.quantity * medicine.price;
+    }, 0);
+    setTotalMedicinePrice(total);
+  };
+
+  // Update total medicine price whenever selectedMedicines changes
+  useEffect(() => {
+    calculateTotalMedicinePrice();
+  }, [selectedMedicines]);
 
   // Function to increment the quantity of a medicine
   const incrementQuantity = (medicineName) => {
@@ -361,6 +400,15 @@ const PatientDetails = () => {
           />
         </Row>
         <Row align="start" direction="horizontal" justify="space-between">
+          <span>Notes</span>
+          <TextArea
+            rows={4}
+            style={{ width: "80%" }}
+            onChange={(event) => setNotes(event.target.value)}
+            defaultValue=""
+          />
+        </Row>
+        <Row align="start" direction="horizontal" justify="space-between">
           <span>Medicine</span>
           <Select
             style={{ width: "80%" }}
@@ -408,11 +456,33 @@ const PatientDetails = () => {
                       -
                     </button>
                     {medicine.name} (Quantity: {medicine.quantity}){" "}
+                    Total Price: {medicine.quantity * medicine.price} {/* Calculate total price */}
                   </li>
                 ))}
               </ul>
             </div>
           )}
+        </Row>
+        <Row align="start" direction="horizontal" justify="space-between">
+          <span>Medicine Price</span>
+          <input
+            type="number"
+            style={{ width: "80%", border: "1px solid #ccc", borderRadius: "4px", padding: "8px" }}
+            min={0}
+            step={0.01}
+            value={totalMedicinePrice} // Display total medicine price
+            readOnly // Ensure it's read-only
+          />
+        </Row>
+        <Row align="start" direction="horizontal" justify="space-between">
+          <span>Doctor Fees</span>
+          <input
+            type="number"
+            style={{ width: "80%", border: "1px solid #ccc", borderRadius: "4px", padding: "8px" }}
+            min={0}
+            step={1}
+            onChange={(event) => setDoctorFees(event.target.value)}
+          />
         </Row>
       </Modal>
 
@@ -434,13 +504,13 @@ const PatientDetails = () => {
           itemLayout="horizontal"
           renderItem={(item) => (
             <List.Item style={{}} key={item.id}>
-              
-              
-              <List.Item.Meta title={<h4>{item.date}</h4>}/>
+
+
+              <List.Item.Meta title={<h4>{item.date}</h4>} />
               <div
-              style={{
-                width: 500,
-              }}
+                style={{
+                  width: 500,
+                }}
               >
                 <Row
                   align="start"
@@ -503,6 +573,23 @@ const PatientDetails = () => {
                   direction="horizontal"
                   justify="space-between"
                 >
+                  <span>Notes</span>
+                  <TextArea
+                    rows={2}
+                    style={{
+                      width: "80%",
+                      backgroundColor: "white",
+                      color: "black",
+                    }}
+                    disabled
+                    defaultValue={item.notes}
+                  />
+                </Row>
+                <Row
+                  align="start"
+                  direction="horizontal"
+                  justify="space-between"
+                >
                   <span>Medicine</span>
                   <TextArea
                     rows={2}
@@ -515,6 +602,26 @@ const PatientDetails = () => {
                     defaultValue={item.medicine.map((medicine) => medicine.name)}
                   />
                 </Row>
+                {Number(item.revenue) > 0 && (
+                  <Row
+                  align="start"
+                  direction="horizontal"
+                  justify="space-between"
+                >
+                  <span>Revenue</span>  
+                  <TextArea
+                    rows={2}
+                    style={{
+                      width: "80%",
+                      backgroundColor: "white",
+                      color: "black",
+                    }}
+                    disabled
+                    defaultValue={item.revenue}
+                  />
+                </Row>
+                )}
+                
 
                 <Popconfirm
                   title="Are you sure to delete this visit?"
@@ -524,7 +631,9 @@ const PatientDetails = () => {
                       item.problem,
                       item.treatment,
                       item.images,
-                      item.medicine
+                      item.medicine,
+                      item.revenue,
+                      item.notes
                     );
                   }}
                   onVisibleChange={() => console.log("visible change")}
